@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+   <meta charset="utf-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="description" content="">
+   <meta name="author" content="">
+   <link rel="icon" href="../../favicon.ico">
+
+   <title>Starter Template for Bootstrap</title>
+
+   <!-- Bootstrap core CSS -->
+   <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+
+   <!-- Custom styles for this template -->
+   <link href="../static/css/starter-template.css" rel="stylesheet">
+
+   <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+   <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+   <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+
+   <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+   <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script>
+
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+     <div class="container">
+       <a class="navbar-brand" href="#">TrailBoss</a>
+       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+         <span class="navbar-toggler-icon"></span>
+       </button>
+       <div class="collapse navbar-collapse" id="navbarResponsive">
+         <ul class="navbar-nav ml-auto">
+           <li class="nav-item active">
+             <a class="nav-link" href="#">Home
+               <span class="sr-only">(current)</span>
+             </a>
+           </li>
+           <li class="nav-item">
+             <a class="nav-link" href="#">About</a>
+           </li>
+           <!--
+           <li class="nav-item">
+             <a class="nav-link" href="#">Services</a>
+           </li>
+           <li class="nav-item">
+             <a class="nav-link" href="#">Contact</a>
+           </li>
+         -->
+         </ul>
+       </div>
+     </div>
+   </nav>
+ </head>
+ 
+     <style>
+.green {background-color:rgba(0, 255, 0, .3);}
+.blue {background-color:rgba(0, 0, 255, .3);}
+.black {background-color:rgba(0, 0, 0, .3);}
+.bb {color: rgba(255, 255, 255, 1); background-color:rgba(0, 0, 0, .6);}
+.white {background-color:rgba(255, 255, 255,1);}
+.main {
+  background-color: rgba(255, 255, 255, 0.7);
+  margin-top: 50px;
+}
+.move-button {
+  display: flex;
+  justify-content: center;
+}
+body {
+  background-image: url('https://images.pexels.com/photos/414171/pexels-photo-414171.jpeg?auto=compress&cs=tinysrgb&h=750&w=1260');
+  background-size: 100%
+}
+@media only screen and (max-width: 600px) {
+    body {
+        background-size: auto;
+    }
+}
+
+button {
+            padding: 1vh 2vw;
+            background-color: DarkSlateGray;
+            color: white;
+            border-radius: 16px;
+            border-color:white;
+            padding-left: 12px;
+            padding-right: 12px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: rgba(0,0,0,0);
+            color: DarkSlateGray;
+            border-color: DarkSlateGray;
+            border: 2px solid DarkSlateGray;
+        }
+</style>
+    
+ <!-- Plotly.js -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+ 
+<body>
+<div class="container">
+      <div class="starter-template">
+        <h3>How about this trail?</h3>
+        <p class="lead">The route is {{foundDistance}} miles and has {{foundAltitude}}!</p>
+      </div>
+
+
+<div id="MyDiv" style="float:left; width:50%; height:100%"></div>
+  <script>
+  var graphs = {{graphJSON | safe}}
+  Plotly.setPlotConfig({
+    mapboxAccessToken: 'pk.eyJ1Ijoia25lbHNvbjMiLCJhIjoiY2ppZWE5anZkMGU2YzNxcGRqYTg5dG8yYiJ9.D8FGAmTsSldyncymXhGzRQ'
+  })
+ Plotly.plot('MyDiv', graphs[0].data,graphs[0].layout)
+  </script>
+
+<img src="data:image/png;base64,{{plotVar}}"\>
+ 
+<div class="container">
+      <form  action="/different_lot" method="GET">
+       
+        <div>
+          <button type="submit" class="btn btn-default btn-lg">Want a different parking lot! <br/> {{remainLots}} more parking areas to try!</button>
+        </div>
+
+      </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+ </div> <!-- /.container-->
+
+
+   <!-- Bootstrap core JavaScript
+   ================================================== -->
+   <!-- Placed at the end of the document so the pages load faster -->
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="static/js/bootstrap.min.js"></script>
+   </body>
+</html>
