@@ -15,7 +15,6 @@ from flaskexample import app
 from sqlalchemy import create_engine
 from sqlalchemy_utils import database_exists, create_database
 from flask import request
-from flaskexample.a_Model import ModelIt
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsRegressor
 from mapboxgl.viz import *
@@ -96,7 +95,6 @@ def substitute_ride():
     X_train, y_train = getTrain(mtbMAPdf)
   
     # Drop train values that are from cluster already suggested
-    print('Im in')
     for clus in clusterTried:
         y_train = y_train.loc[y_train['centriodLabel']!=clus]
         X_train = X_train.loc[X_train['centriodLabel']!=clus]
@@ -215,7 +213,7 @@ def findRoute(X_train,y_train,targetDistance,targetAltitude):
     #Setup dataframe for prediction and make prediction
     X_test['totalDistance'] = [targetDistance] #pull desired distance
     X_test['netAltGain'] = [targetAltitude] #pull desired altitude
-    X_test = scaler.transform(X_test) #scale prediction
+    X_test = scaler.transform(X_test) #scale test
     route = knn.predict(X_test) #make prediction
     
     #Matched distance
