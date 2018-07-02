@@ -23,6 +23,8 @@ from mapboxgl.colors import *
 from plotly.graph_objs import *
 from plotly.graph_objs import *
 from mapbox import Geocoder
+import plotly.graph_objs as go
+import plotly.plotly as py
 
 global lotCounter, mtbMAPdf, targetAltitude, targetDistance, clusterTried
 matplotlib.use('Agg')
@@ -44,23 +46,40 @@ def ride_input():
     clusterTried = [] #list storing ride parking lots already tried
     return render_template("input.html")
 
+
+@app.route('/error')
+def error_page():
+    """
+    Home page that shows input boxes for desired elevation and altitude
+    """
+    global lotCounter, clusterTried
+    lotCounter = 5 #Counter for number of parking lots remaining
+    clusterTried = [] #list storing ride parking lots already tried
+    return render_template("error.html")
+
 @app.route('/output')
 def first_ride():
     """
     First output from homepage. Shows interactive map from found trail, and 
     elevation profile, and botton for showing additional rides
     """
+    altitudePull = request.args.get('altitude') #pull desired altitude
+    distancePull = request.args.get('distance') #pull desired distance
+    if not altitudePull.isdigit() or not distancePull.isdigit():
+        return render_template("error.html")
+
     global lotCounter, targetAltitude, targetDistance, mtbMAPdf, clusterTried
     lotCounter = lotCounter-1 # Counter for number of parking lots remaining
+
+    # Convert desired distance to a float
+    targetAltitude = float(altitudePull)
+    targetDistance = float(distancePull)
+
     
     # Setup train data
     X_train, y_train = getTrain(mtbMAPdf)
     y_train = y_train.drop('centriodLabel', 1)
-    X_train = X_train.drop('centriodLabel', 1)
-    
-    # Retrieve desired altitude and distance
-    targetAltitude = float(request.args.get('altitude')) #pull desired altitude
-    targetDistance = float(request.args.get('distance')) #pull desired distance
+    X_train = X_train.drop('centriodLabel', 1)    
 
     # Find cloest route and extract distance and elevation
     prediction, matchedDis, matchedAlt = findRoute(X_train,y_train,targetDistance,targetAltitude)
@@ -76,10 +95,10 @@ def first_ride():
     token = config.api_key #mapbox token 
     #create dictionary for plotly maps and store as JSON
     graphJSON = makeGraphJSON(myLat,myLon,token)
-    myFig = myElevationfig(mtbMAPdf,prediction) #plot elevation profile and save
+    elevationJSON = myElevationfig(mtbMAPdf,prediction) #plot elevation profile and save
     return render_template("output.html", foundDistance = ('%0.1f'%matchedDis),
                            foundAltitude = ('%0.0f'%matchedAlt),graphJSON=graphJSON,
-                           remainLots=lotCounter, plotVar = myFig)
+                           remainLots=lotCounter, elevationJSON = elevationJSON)
 
 @app.route('/different_lot')
 def substitute_ride():
@@ -115,27 +134,65 @@ def substitute_ride():
     token = config.api_key #mapbox token 
     #create dictionary for plotly maps and store as JSON
     graphJSON = makeGraphJSON(myLat,myLon,token)
-    myFig = myElevationfig(mtbMAPdf,prediction) #plot elevation profile and save
+    elevationJSON = myElevationfig(mtbMAPdf,prediction) #plot elevation profile and save
     return render_template("different_lot.html", foundDistance = ('%0.1f'%matchedDis),
                            foundAltitude = ('%0.0f'%matchedAlt),graphJSON=graphJSON,
-                           remainLots=lotCounter,plotVar = myFig)
+                           remainLots=lotCounter,elevationJSON = elevationJSON)
+
+@app.route('/About', methods=['GET', 'POST'])
+def About():
+    return render_template('About.html')
 
 def myElevationfig(mtbMAPdf,prediction):
     """
     Creates elevation profile map
     """
     indRoute = mtbMAPdf.index[mtbMAPdf.id == prediction[0][0]].tolist()[0]
-    plt.plot(mtbMAPdf.distance[indRoute],mtbMAPdf.altitude[indRoute],color = 'darkgreen')
-    plt.xlabel('distance (m)')
-    plt.ylabel('elevation (ft)')
-    ax = plt.gca()
-    ax.fill_between(mtbMAPdf.distance[indRoute], mtbMAPdf.altitude[indRoute],0,color = 'darkgreen')
-    png_output = BytesIO()
-    plt.savefig(png_output)
-    png_output.seek(0)  # rewind to beginning of file
-    figdata_png = base64.b64encode(png_output.getvalue()).decode('utf8')
-    plt.clf()
-    return figdata_png
+    windowMask = 10 
+    # Pad distance and elevation
+    allDista = mtbMAPdf.plotDis[indRoute]
+    #allDista = mtbMAPdf.distance[indRoute][windowMask:-windowMask]-mtbMAPdf.distance[indRoute][windowMask]
+    
+    allElevation = mtbMAPdf.plotAlt[indRoute]
+    #allElevation = mtbMAPdf.smoothAlt[indRoute][windowMask:-windowMask]
+    #allElevation = mtbMAPdf.altitude[indRoute]
+    
+   # print(allElevation)
+   # print(allDista)
+
+
+    elevgraphs = [dict(
+        data = Data([
+            (go.Scatter(
+                x=allDista,
+                y=allElevation,
+                fill='tozeroy',
+                mode = 'none',
+                marker=dict(
+                    size=0)
+            )),
+                ]),
+        layout = go.Layout(
+            title='Elevation Profile',
+            xaxis=dict(
+                title='Distance (mile)',
+                titlefont=dict(
+                    #family='Courier New, monospace',
+                    size=18,
+                    color='black'
+                )
+            ),
+            yaxis=dict(
+                title='Elevation (ft)',
+                titlefont=dict(
+                    #family='Courier New, monospace',
+                    size=18,
+                    color='black'
+                )
+            )
+        )
+        )]
+    return json.dumps(elevgraphs, cls=plotly.utils.PlotlyJSONEncoder)
 
 def makeGraphJSON(myLat,myLon,token):
     """
@@ -213,7 +270,7 @@ def findRoute(X_train,y_train,targetDistance,targetAltitude):
     #Setup dataframe for prediction and make prediction
     X_test['totalDistance'] = [targetDistance] #pull desired distance
     X_test['netAltGain'] = [targetAltitude] #pull desired altitude
-    X_test = scaler.transform(X_test) #scale test
+    X_test = scaler.transform(X_test) #scale prediction
     route = knn.predict(X_test) #make prediction
     
     #Matched distance
